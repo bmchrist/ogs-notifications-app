@@ -1,12 +1,46 @@
 import Foundation
 
+enum ServerEnvironment: String, CaseIterable {
+    case localhost = "http://localhost:8080"
+    case production = "https://ogs-notifications-server-578849264983.us-east1.run.app"
+
+    var displayName: String {
+        switch self {
+        case .localhost:
+            return "Local (localhost:8080)"
+        case .production:
+            return "Production (Cloud Run)"
+        }
+    }
+}
+
 class NetworkManager {
     static let shared = NetworkManager()
 
-    private let baseURL = "http://localhost:8080"
+    private var currentEnvironment: ServerEnvironment {
+        if let savedEnvironment = UserDefaults.standard.string(forKey: "server_environment"),
+           let environment = ServerEnvironment(rawValue: savedEnvironment) {
+            return environment
+        }
+        return .localhost
+    }
+
+    private var baseURL: String {
+        return currentEnvironment.rawValue
+    }
+
     private let session = URLSession.shared
 
     private init() {}
+
+    func setServerEnvironment(_ environment: ServerEnvironment) {
+        UserDefaults.standard.set(environment.rawValue, forKey: "server_environment")
+        print("🔄 Server environment changed to: \(environment.displayName)")
+    }
+
+    func getCurrentEnvironment() -> ServerEnvironment {
+        return currentEnvironment
+    }
 
     func registerDevice(userId: String, deviceToken: String) async throws {
         guard let url = URL(string: "\(baseURL)/register") else {

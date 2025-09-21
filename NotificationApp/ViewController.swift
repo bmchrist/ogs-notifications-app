@@ -5,6 +5,8 @@ class ViewController: UIViewController {
     private let titleLabel = UILabel()
     private let statusLabel = UILabel()
     private let serverHealthLabel = UILabel()
+    private let serverToggleLabel = UILabel()
+    private let serverToggleSegmentedControl = UISegmentedControl(items: ServerEnvironment.allCases.map { $0.displayName })
     private let userIdTextField = UITextField()
     private let setUserIdButton = UIButton(type: .system)
     private let diagnosticsButton = UIButton(type: .system)
@@ -46,6 +48,16 @@ class ViewController: UIViewController {
         serverHealthLabel.numberOfLines = 0
         serverHealthLabel.text = "🔄 Checking server..."
 
+        serverToggleLabel.text = "Server Environment:"
+        serverToggleLabel.font = .preferredFont(forTextStyle: .headline)
+        serverToggleLabel.textAlignment = .center
+
+        let currentEnvironment = NetworkManager.shared.getCurrentEnvironment()
+        if let index = ServerEnvironment.allCases.firstIndex(of: currentEnvironment) {
+            serverToggleSegmentedControl.selectedSegmentIndex = index
+        }
+        serverToggleSegmentedControl.addTarget(self, action: #selector(serverToggleChanged), for: .valueChanged)
+
         userIdTextField.placeholder = "Enter your OGS User ID (e.g., 1783478)"
         userIdTextField.borderStyle = .roundedRect
         userIdTextField.keyboardType = .numberPad
@@ -82,6 +94,9 @@ class ViewController: UIViewController {
 
         stackView.addArrangedSubview(titleLabel)
         stackView.addArrangedSubview(statusLabel)
+        stackView.addArrangedSubview(createSeparator())
+        stackView.addArrangedSubview(serverToggleLabel)
+        stackView.addArrangedSubview(serverToggleSegmentedControl)
         stackView.addArrangedSubview(serverHealthLabel)
         stackView.addArrangedSubview(refreshHealthButton)
         stackView.addArrangedSubview(createSeparator())
@@ -190,6 +205,21 @@ class ViewController: UIViewController {
 
     @objc private func refreshHealthTapped() {
         checkServerHealth()
+    }
+
+    @objc private func serverToggleChanged() {
+        let selectedIndex = serverToggleSegmentedControl.selectedSegmentIndex
+        guard selectedIndex < ServerEnvironment.allCases.count else { return }
+
+        let selectedEnvironment = ServerEnvironment.allCases[selectedIndex]
+        NetworkManager.shared.setServerEnvironment(selectedEnvironment)
+
+        print("🔄 Server environment changed to: \(selectedEnvironment.displayName)")
+
+        // Automatically check health of new server
+        checkServerHealth()
+
+        showAlert(title: "Server Changed", message: "Now using: \(selectedEnvironment.displayName)")
     }
 
     private func checkServerHealth() {
