@@ -2,7 +2,7 @@ import Foundation
 
 enum ServerEnvironment: String, CaseIterable {
     case localhost = "http://localhost:8080"
-    case production = "https://ogs-notifications-server-578849264983.us-east1.run.app"
+    case production = "https://ogs-notifications.bmchri.st"
 
     var displayName: String {
         switch self {
